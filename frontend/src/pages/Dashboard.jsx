@@ -42,24 +42,31 @@ export default function Dashboard() {
                 const barRes = await axios.get(`${API_URL}/finance/analytics/trends`, config);
                 const transRes = await axios.get(`${API_URL}/finance/transactions?limit=10`, config);
 
-                setTransactions(transRes.data.data);
+                const transactionsData = transRes.data?.data || [];
+                setTransactions(transactionsData);
 
                 // Stunning color palette for charts
                 const pColors = ['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#4f46e5', '#8b5cf6', '#ef4444', '#14b8a6'];
 
-                setPieData({
-                    labels: pieRes.data.map((d) => d.name),
-                    datasets: [{
-                        data: pieRes.data.map((d) => d.total),
-                        backgroundColor: pColors,
-                        hoverOffset: 12,
-                        borderWidth: 0,
-                    }]
-                });
+                const pieResults = pieRes.data || [];
+                if (pieResults.length > 0) {
+                    setPieData({
+                        labels: pieResults.map((d) => d.name),
+                        datasets: [{
+                            data: pieResults.map((d) => d.total),
+                            backgroundColor: pColors,
+                            hoverOffset: 12,
+                            borderWidth: 0,
+                        }]
+                    });
+                } else {
+                    setPieData({ labels: [], datasets: [{ data: [], backgroundColor: [] }] });
+                }
 
-                const months = [...new Set(barRes.data.map(d => d.month))];
-                const incomes = months.map(m => barRes.data.find(d => d.month === m && d.type === 'income')?.total || 0);
-                const expenses = months.map(m => barRes.data.find(d => d.month === m && d.type === 'expense')?.total || 0);
+                const barResults = barRes.data || [];
+                const months = [...new Set(barResults.map(d => d.month))];
+                const incomes = months.map(m => barResults.find(d => d.month === m && d.type === 'income')?.total || 0);
+                const expenses = months.map(m => barResults.find(d => d.month === m && d.type === 'expense')?.total || 0);
 
                 setBarData({
                     labels: months,
