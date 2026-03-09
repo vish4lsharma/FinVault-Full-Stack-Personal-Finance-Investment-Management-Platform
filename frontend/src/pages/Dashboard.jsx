@@ -18,7 +18,7 @@ import {
 } from 'chart.js';
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, PointElement, LineElement);
 
-const API = 'http://localhost:5000/api';
+const API = '/api';
 const PIE_COLORS = ['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#4f46e5', '#8b5cf6', '#ef4444', '#14b8a6'];
 
 // ─── Safe Chart wrappers — use `key` to force full remount on new data ────────
