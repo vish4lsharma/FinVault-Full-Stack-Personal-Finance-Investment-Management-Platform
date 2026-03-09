@@ -62,3 +62,19 @@ CREATE TABLE budgets (
     monthly_limit DECIMAL(12, 2) NOT NULL,
     UNIQUE(user_id, category_id)
 );
+
+CREATE TABLE stock_prices (
+    ticker VARCHAR(10) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    price DECIMAL(12, 2) NOT NULL,
+    change VARCHAR(20) NOT NULL,
+    direction VARCHAR(10) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO stock_prices (ticker, name, price, change, direction) VALUES
+('AAPL', 'Apple Inc.', 193.45, '+0.82%', 'up'),
+('TSLA', 'Tesla, Inc.', 175.22, '-1.45%', 'down'),
+('BTC', 'Bitcoin', 68420.50, '+3.20%', 'up'),
+('NVDA', 'NVIDIA Corp.', 875.30, '+2.15%', 'up')
+ON CONFLICT (ticker) DO UPDATE SET price = EXCLUDED.price, change = EXCLUDED.change, direction = EXCLUDED.direction, updated_at = CURRENT_TIMESTAMP;

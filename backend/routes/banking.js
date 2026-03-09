@@ -4,26 +4,66 @@ const db = require('../db');
 const { authenticateToken } = require('../middleware/auth');
 const { body, validationResult } = require('express-validator');
 
-// Create account
+// ─── Get account info ────────────────────────────────────────────────────────
+router.get('/account', authenticateToken, async (req, res) => {
+    try {
+        const result = await db.query(
+            'SELECT id, balance, created_at FROM accounts WHERE user_id = $1',
+            [req.user.id]
+        );
+        if (result.rows.length === 0) return res.status(404).json({ error: 'No account found. Create one first.' });
+        res.json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ─── Get balance ──────────────────────────────────────────────────────────────
+router.get('/balance', authenticateToken, async (req, res) => {
+    try {
+        const result = await db.query('SELECT balance FROM accounts WHERE user_id = $1', [req.user.id]);
+        if (result.rows.length === 0) return res.status(404).json({ error: 'Account not found' });
+        res.json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ─── Get transfer history ─────────────────────────────────────────────────────
+router.get('/transfers', authenticateToken, async (req, res) => {
+    try {
+        const result = await db.query(
+            `SELECT bt.id, bt.amount, bt.status, bt.created_at,
+                    u_from.email as from_email, u_to.email as to_email,
+                    CASE WHEN a_from.user_id = $1 THEN 'sent' ELSE 'received' END as direction
+             FROM bank_transfers bt
+             JOIN accounts a_from ON bt.from_account = a_from.id
+             JOIN accounts a_to   ON bt.to_account   = a_to.id
+             JOIN users u_from ON a_from.user_id = u_from.id
+             JOIN users u_to   ON a_to.user_id   = u_to.id
+             WHERE a_from.user_id = $1 OR a_to.user_id = $1
+             ORDER BY bt.created_at DESC
+             LIMIT 20`,
+            [req.user.id]
+        );
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ─── Create account ───────────────────────────────────────────────────────────
 router.post('/account', authenticateToken, async (req, res) => {
     try {
         const result = await db.query(
             'INSERT INTO accounts (user_id) VALUES ($1) ON CONFLICT (user_id) DO NOTHING RETURNING *',
             [req.user.id]
         );
-        if (result.rows.length === 0) return res.status(400).json({ error: 'Account already exists' });
+        if (result.rows.length === 0) {
+            const existing = await db.query('SELECT * FROM accounts WHERE user_id = $1', [req.user.id]);
+            return res.status(200).json(existing.rows[0]);
+        }
         res.status(201).json(result.rows[0]);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// Get balance
-router.get('/balance', authenticateToken, async (req, res) => {
-    try {
-        const result = await db.query('SELECT balance FROM accounts WHERE user_id = $1', [req.user.id]);
-        if (result.rows.length === 0) return res.status(404).json({ error: 'Account not found' });
-        res.json(result.rows[0]);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
