@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { logout } from '../features/authSlice';
@@ -17,8 +17,8 @@ export default function Dashboard() {
     const navigate = useNavigate();
 
     const [transactions, setTransactions] = useState([]);
-    const [pieData, setPieData] = useState({ labels: [], datasets: [] });
-    const [barData, setBarData] = useState({ labels: [], datasets: [] });
+    const [pieData, setPieData] = useState(null);
+    const [barData, setBarData] = useState(null);
     const [balance, setBalance] = useState(0);
 
     useEffect(() => {
@@ -34,63 +34,82 @@ export default function Dashboard() {
                 // Fetch Balance
                 try {
                     const balRes = await axios.get(`${API_URL}/banking/balance`, config);
-                    setBalance(balRes.data.balance || 0);
-                } catch (e) { console.log('No account setup yet') }
+                    setBalance(balRes.data?.balance || 0);
+                } catch (e) {
+                    console.log('Banking balance fallback');
+                    setBalance(0);
+                }
 
                 // Fetch Analytics
-                const pieRes = await axios.get(`${API_URL}/finance/analytics/spending`, config);
-                const barRes = await axios.get(`${API_URL}/finance/analytics/trends`, config);
-                const transRes = await axios.get(`${API_URL}/finance/transactions?limit=10`, config);
+                let pieResults = [];
+                let barResults = [];
+                let transactionsData = [];
 
-                const transactionsData = transRes.data?.data || [];
+                try {
+                    const pieRes = await axios.get(`${API_URL}/finance/analytics/spending`, config);
+                    pieResults = pieRes.data || [];
+                } catch (e) { console.log('Pie data error'); }
+
+                try {
+                    const barRes = await axios.get(`${API_URL}/finance/analytics/trends`, config);
+                    barResults = barRes.data || [];
+                } catch (e) { console.log('Bar data error'); }
+
+                try {
+                    const transRes = await axios.get(`${API_URL}/finance/transactions?limit=10`, config);
+                    transactionsData = transRes.data?.data || [];
+                } catch (e) { console.log('Transactions data error'); }
+
                 setTransactions(transactionsData);
 
-                // Stunning color palette for charts
+                // Chart Colors
                 const pColors = ['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#4f46e5', '#8b5cf6', '#ef4444', '#14b8a6'];
 
-                const pieResults = pieRes.data || [];
                 if (pieResults.length > 0) {
                     setPieData({
-                        labels: pieResults.map((d) => d.name),
+                        labels: pieResults.map((d) => d.name || 'Misc'),
                         datasets: [{
-                            data: pieResults.map((d) => d.total),
+                            data: pieResults.map((d) => d.total || 0),
                             backgroundColor: pColors,
                             hoverOffset: 12,
                             borderWidth: 0,
                         }]
                     });
                 } else {
-                    setPieData({ labels: [], datasets: [{ data: [], backgroundColor: [] }] });
+                    setPieData(null);
                 }
 
-                const barResults = barRes.data || [];
-                const months = [...new Set(barResults.map(d => d.month))];
-                const incomes = months.map(m => barResults.find(d => d.month === m && d.type === 'income')?.total || 0);
-                const expenses = months.map(m => barResults.find(d => d.month === m && d.type === 'expense')?.total || 0);
+                if (barResults.length > 0) {
+                    const months = [...new Set(barResults.map(d => d.month))];
+                    const incomes = months.map(m => barResults.find(d => d.month === m && d.type === 'income')?.total || 0);
+                    const expenses = months.map(m => barResults.find(d => d.month === m && d.type === 'expense')?.total || 0);
 
-                setBarData({
-                    labels: months,
-                    datasets: [
-                        {
-                            label: 'Inflow',
-                            data: incomes,
-                            backgroundColor: '#6366f1',
-                            borderRadius: 8,
-                            hoverBackgroundColor: '#818cf8',
-                            barThickness: 16
-                        },
-                        {
-                            label: 'Outflow',
-                            data: expenses,
-                            backgroundColor: '#ec4899',
-                            borderRadius: 8,
-                            hoverBackgroundColor: '#f472b6',
-                            barThickness: 16
-                        },
-                    ]
-                });
+                    setBarData({
+                        labels: months,
+                        datasets: [
+                            {
+                                label: 'Inflow',
+                                data: incomes,
+                                backgroundColor: '#6366f1',
+                                borderRadius: 8,
+                                hoverBackgroundColor: '#818cf8',
+                                barThickness: 16
+                            },
+                            {
+                                label: 'Outflow',
+                                data: expenses,
+                                backgroundColor: '#ec4899',
+                                borderRadius: 8,
+                                hoverBackgroundColor: '#f472b6',
+                                barThickness: 16
+                            },
+                        ]
+                    });
+                } else {
+                    setBarData(null);
+                }
             } catch (err) {
-                console.error(err);
+                console.error('Fatal fetch error:', err);
             }
         };
 
@@ -109,27 +128,24 @@ export default function Dashboard() {
     return (
         <div className="app-container flex min-h-screen text-white font-sans overflow-hidden">
 
-            {/* Sidebar for navigation */}
+            {/* Sidebar */}
             <aside className="hidden lg:flex flex-col w-[260px] bg-black/40 border-r border-white/5 p-8 backdrop-blur-3xl z-30">
                 <div className="flex items-center gap-3 mb-16">
                     <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-lg shadow-white/5">
                         <LayoutDashboard className="w-6 h-6 text-black" />
                     </div>
-                    <h1 className="font-heading text-xl font-black italic tracking-tighter">FinVault</h1>
+                    <h1 className="font-heading text-xl font-black italic tracking-tighter text-white">FinVault</h1>
                 </div>
 
                 <nav className="flex-1 space-y-4">
                     <button className="w-full flex items-center gap-4 text-white bg-white/5 px-6 py-4 rounded-2xl border border-white/10 font-bold transition duration-300 transform active:scale-95 shadow-inner">
-                        <LayoutDashboard className="w-5 h-5" /> Dashboard
+                        <LayoutDashboard className="w-5 h-5 text-white" /> <span className="text-white">Dashboard</span>
                     </button>
                     <button className="w-full flex items-center gap-4 text-zinc-500 hover:text-white px-6 py-4 rounded-2xl border border-transparent hover:border-white/5 transition duration-300 font-medium">
-                        <History className="w-5 h-5" /> Activity
+                        <History className="w-5 h-5 text-zinc-500" /> <span className="text-zinc-500 group-hover:text-white">Activity</span>
                     </button>
                     <button className="w-full flex items-center gap-4 text-zinc-500 hover:text-white px-6 py-4 rounded-2xl border border-transparent hover:border-white/5 transition duration-300 font-medium">
-                        <TrendIcon className="w-5 h-5" /> Stock Desk
-                    </button>
-                    <button className="w-full flex items-center gap-4 text-zinc-500 hover:text-white px-6 py-4 rounded-2xl border border-transparent hover:border-white/5 transition duration-300 font-medium">
-                        <CreditCard className="w-5 h-5" /> Cards
+                        <TrendIcon className="w-5 h-5 text-zinc-500" /> <span className="text-zinc-500 group-hover:text-white">Stock Desk</span>
                     </button>
                 </nav>
 
@@ -138,25 +154,13 @@ export default function Dashboard() {
                         onClick={handleLogout}
                         className="w-full flex items-center gap-4 text-red-500 bg-red-500/10 px-6 py-4 rounded-2xl hover:bg-red-500/20 transition duration-300 font-bold border border-red-500/20"
                     >
-                        <LogOut className="w-5 h-5" /> Sign Out
+                        <LogOut className="w-5 h-5 text-red-500" /> Sign Out
                     </button>
                 </div>
             </aside>
 
             {/* Main Content Hub */}
             <main className="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-12 relative z-10">
-                {/* Mobile Header */}
-                <div className="lg:hidden flex justify-between items-center mb-10">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                            <LayoutDashboard className="w-5 h-5 text-black" />
-                        </div>
-                        <h1 className="text-xl font-black">FV</h1>
-                    </div>
-                    <button onClick={handleLogout} className="p-3 bg-red-500/10 text-red-500 rounded-xl border border-red-500/20"><LogOut className="w-5 h-5" /></button>
-                </div>
-
-                {/* Dynamic Background Highlights */}
                 <div className="fixed top-[10%] right-[10%] w-[400px] h-[400px] bg-indigo-600/10 rounded-full blur-[150px] animate-pulse-slow pointer-events-none"></div>
                 <div className="fixed bottom-[10%] left-[10%] w-[400px] h-[400px] bg-pink-600/5 rounded-full blur-[150px] animate-pulse-slow pointer-events-none" style={{ animationDelay: '3s' }}></div>
 
@@ -175,12 +179,10 @@ export default function Dashboard() {
                     </div>
                 </header>
 
-                {/* Global Statistics Matrix */}
+                {/* Global Statistics */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
 
-                    {/* Primary Asset Card */}
                     <div className="vault-card p-10 min-h-[300px] flex flex-col justify-between stat-gradient-blue relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-[50%] h-[100%] bg-white/5 translate-x-1/2 -rotate-12 blur-3xl pointer-events-none"></div>
                         <div>
                             <div className="flex justify-between items-start mb-4">
                                 <p className="font-bold text-white/60 uppercase tracking-widest text-xs">Master Balance</p>
@@ -188,37 +190,36 @@ export default function Dashboard() {
                             </div>
                             <h3 className="font-heading text-6xl font-black text-white tracking-tighter leading-none mb-6">
                                 <span className="text-2xl font-medium opacity-50 mr-1">$</span>
-                                {balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                {Number(balance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </h3>
                         </div>
                         <div className="flex gap-4">
-                            <button className="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur-xl border border-white/20 py-4 rounded-2xl text-sm font-black transition flex justify-center items-center shadow-lg">
-                                <ArrowDownRight className="w-4 h-4 mr-2" /> Inflow
+                            <button className="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur-xl border border-white/20 py-4 rounded-2xl text-sm font-black transition flex justify-center items-center text-white shadow-lg">
+                                <ArrowDownRight className="w-4 h-4 mr-2 text-white" /> <span className="text-white">Inflow</span>
                             </button>
-                            <button className="flex-1 bg-black/20 hover:bg-black/40 backdrop-blur-xl border border-white/10 py-4 rounded-2xl text-sm font-black transition flex justify-center items-center shadow-lg">
-                                <ArrowUpRight className="w-4 h-4 mr-2" /> Outflow
+                            <button className="flex-1 bg-black/20 hover:bg-black/40 backdrop-blur-xl border border-white/10 py-4 rounded-2xl text-sm font-black transition flex justify-center items-center text-white shadow-lg">
+                                <ArrowUpRight className="w-4 h-4 mr-2 text-white" /> <span className="text-white">Outflow</span>
                             </button>
                         </div>
                     </div>
 
-                    {/* Metrics Grid Area */}
                     <div className="flex flex-col gap-8">
                         <div className="vault-card p-8 flex-1 flex flex-col justify-between">
                             <div className="flex justify-between items-center mb-6">
                                 <h4 className="text-zinc-500 font-bold uppercase tracking-widest text-[10px] flex items-center gap-2">
                                     <Activity className="w-4 h-4 text-purple-500" /> Stock Monitor
                                 </h4>
-                                <span className="text-xs text-green-400 font-black px-2 py-1 bg-green-500/10 rounded-lg">LIVE</span>
+                                <span className="text-xs text-green-400 font-black px-2 py-1 bg-green-500/10 rounded-lg text-emerald-400">LIVE</span>
                             </div>
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 bg-white text-black rounded-lg flex items-center justify-center font-black text-xs">AAPL</div>
-                                    <p className="font-bold text-sm">Apple Inc.</p>
+                                    <p className="font-bold text-sm text-white">Apple Inc.</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="font-black text-sm">$193.45</p>
-                                    <p className="text-[10px] text-green-400 font-bold flex items-center gap-1 justify-end">
-                                        <TrendIcon className="w-3 h-3" /> 0.82%
+                                    <p className="font-black text-sm text-white">$193.45</p>
+                                    <p className="text-[10px] text-green-400 font-bold flex items-center gap-1 justify-end text-emerald-400">
+                                        <TrendIcon className="w-3 h-3 text-emerald-400" /> 0.82%
                                     </p>
                                 </div>
                             </div>
@@ -232,24 +233,23 @@ export default function Dashboard() {
                                 <h4 className="text-white/60 font-black uppercase text-[10px] tracking-widest mb-1">Total Savings</h4>
                                 <p className="text-3xl font-black text-white leading-none">$42,910</p>
                             </div>
-                            <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition duration-500 shadow-xl border border-white/20">
+                            <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition duration-500 shadow-xl border border-white/20 text-white">
                                 <CreditCard className="w-6 h-6 text-white" />
                             </div>
                         </div>
                     </div>
 
-                    {/* Transaction Feed Mini Card */}
                     <div className="vault-card p-0 flex flex-col bg-zinc-900 shadow-3xl">
                         <div className="p-8 border-b border-white/5 bg-gradient-to-r from-transparent to-white/5 flex justify-between items-center">
                             <h4 className="text-zinc-400 font-black uppercase tracking-widest text-[10px]">Operations Feed</h4>
-                            <button onClick={handleExport} className="text-zinc-500 hover:text-white transition"><Download className="w-4 h-4" /></button>
+                            <button onClick={handleExport} className="text-zinc-500 hover:text-white transition"><Download className="w-4 h-4 text-zinc-500" /></button>
                         </div>
                         <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-6">
-                            {transactions.length > 0 ? transactions.slice(0, 5).map((tx) => (
+                            {transactions && transactions.length > 0 ? transactions.slice(0, 5).map((tx) => (
                                 <div key={tx.id} className="flex justify-between items-center group">
                                     <div className="flex items-center gap-4">
                                         <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-105 ${tx.type === 'income' ? 'bg-green-500/10 text-green-400 border border-green-500/10' : 'bg-pink-500/10 text-pink-500 border border-pink-500/10'}`}>
-                                            {tx.type === 'income' ? <TrendIcon className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
+                                            {tx.type === 'income' ? <TrendIcon className="w-5 h-5 text-emerald-400" /> : <TrendingDown className="w-5 h-5 text-pink-500" />}
                                         </div>
                                         <div>
                                             <p className="font-bold text-sm text-zinc-200 group-hover:text-white transition">{tx.description}</p>
@@ -257,13 +257,13 @@ export default function Dashboard() {
                                         </div>
                                     </div>
                                     <span className={`font-black text-sm tracking-tighter ${tx.type === 'income' ? 'text-green-400' : 'text-zinc-300'}`}>
-                                        {tx.type === 'income' ? '+' : '-'}${parseFloat(tx.amount).toFixed(2)}
+                                        {tx.type === 'income' ? '+' : '-'}${Number(tx.amount).toFixed(2)}
                                     </span>
                                 </div>
                             )) : (
                                 <div className="flex flex-col items-center justify-center py-10 text-zinc-700">
-                                    <History className="w-10 h-10 mb-4 opacity-10" />
-                                    <p className="text-xs font-black uppercase tracking-widest opacity-20">No operations found</p>
+                                    <History className="w-10 h-10 mb-4 opacity-10 text-zinc-700" />
+                                    <p className="text-xs font-black uppercase tracking-widest opacity-20 text-zinc-700">No operations found</p>
                                 </div>
                             )}
                         </div>
@@ -273,19 +273,14 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                {/* Analytics Deep Scan */}
+                {/* Analytics Section */}
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-10">
-                    {/* Flow Chart */}
                     <div className="lg:col-span-3 vault-card p-10 bg-zinc-950/40 backdrop-blur-3xl shadow-none">
                         <div className="flex justify-between items-center mb-10">
                             <h3 className="text-2xl font-black text-white leading-none">Cash Flow Analysis</h3>
-                            <div className="flex gap-2">
-                                <span className="w-3 h-3 rounded-full bg-indigo-500"></span>
-                                <span className="w-3 h-3 rounded-full bg-pink-500"></span>
-                            </div>
                         </div>
                         <div className="h-[300px] w-full">
-                            {barData.labels.length > 0 ? (
+                            {barData && barData.labels && barData.labels.length > 0 ? (
                                 <Bar
                                     options={{
                                         responsive: true,
@@ -303,18 +298,17 @@ export default function Dashboard() {
                                 />
                             ) : (
                                 <div className="h-full flex flex-col items-center justify-center text-zinc-800">
-                                    <Activity className="w-12 h-12 mb-4 opacity-5" />
-                                    <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-10">Deep analytical data pending</p>
+                                    <Activity className="w-12 h-12 mb-4 opacity-5 text-zinc-800" />
+                                    <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-10 text-zinc-800">Deep analytical data pending</p>
                                 </div>
                             )}
                         </div>
                     </div>
 
-                    {/* Pie Outflow Distribution */}
                     <div className="lg:col-span-2 vault-card p-10 bg-zinc-950/40 backdrop-blur-3xl shadow-none">
                         <h3 className="text-2xl font-black text-white mb-10 leading-none">Capital Leakage</h3>
                         <div className="h-[260px] flex justify-center items-center relative">
-                            {pieData.labels.length > 0 ? (
+                            {pieData && pieData.labels && pieData.labels.length > 0 ? (
                                 <Pie
                                     options={{
                                         responsive: true,
@@ -328,20 +322,19 @@ export default function Dashboard() {
                                 />
                             ) : (
                                 <div className="flex flex-col items-center text-zinc-800">
-                                    <Pie className="w-12 h-12 mb-4 opacity-5" />
-                                    <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-10">Waiting for data</p>
+                                    <Pie className="w-12 h-12 mb-4 opacity-5 text-zinc-800" />
+                                    <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-10 text-zinc-800">Waiting for data</p>
                                 </div>
                             )}
-                            {pieData.labels.length > 0 && (
+                            {pieData && pieData.labels && pieData.labels.length > 0 && (
                                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mb-10">
-                                    <span className="text-zinc-600 text-[10px] font-black uppercase tracking-widest mb-1">Leakage</span>
+                                    <span className="text-zinc-600 text-[10px] font-black uppercase tracking-widest mb-1 text-zinc-600">Leakage</span>
                                     <span className="font-heading font-black text-white text-3xl">-{pieData.datasets[0].data.reduce((a, b) => a + b, 0).toLocaleString()}</span>
                                 </div>
                             )}
                         </div>
                     </div>
                 </div>
-
             </main>
         </div>
     );
