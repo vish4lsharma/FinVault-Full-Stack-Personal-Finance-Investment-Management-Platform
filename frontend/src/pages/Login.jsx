@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { login } from '../features/authSlice';
 import { useNavigate } from 'react-router-dom';
-import { Wallet, ShieldCheck, ArrowRight, TrendingUp } from 'lucide-react';
+import { Lock, Mail, ArrowRight, Shield, TrendingUp } from 'lucide-react';
 
 export default function Login() {
     const [email, setEmail] = useState('');
@@ -20,105 +20,111 @@ export default function Login() {
     };
 
     return (
-        <div className="min-h-screen bg-[#050505] flex relative overflow-hidden font-sans">
+        <div className="min-h-screen bg-[#08080a] flex items-center justify-center p-6 relative overflow-hidden font-sans">
 
-            {/* Dynamic Background Elements */}
-            <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-blue-600/20 rounded-full blur-[150px] animate-float"></div>
-            <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-purple-600/20 rounded-full blur-[150px] animate-float" style={{ animationDelay: '3s' }}></div>
+            {/* Dynamic Aura Background */}
+            <div className="absolute top-[-30%] left-[-20%] w-[80%] h-[80%] bg-blue-600/10 rounded-full blur-[180px] animate-pulse-slow"></div>
+            <div className="absolute bottom-[-30%] right-[-20%] w-[80%] h-[80%] bg-indigo-600/10 rounded-full blur-[180px] animate-pulse-slow" style={{ animationDelay: '3s' }}></div>
 
-            {/* Left Area - Marketing/Branding (Hidden on mobile) */}
-            <div className="hidden lg:flex w-1/2 flex-col justify-center px-20 relative z-10 border-r border-white/5 bg-gradient-to-b from-transparent to-black/40">
-                <div className="glass-card p-10 max-w-lg shadow-2xl animate-float" style={{ animationDuration: '8s' }}>
-                    <div className="bg-white/10 w-fit p-4 rounded-xl mb-8 border border-white/10 shadow-inner">
-                        <Wallet className="w-10 h-10 text-blue-400" />
+            <div className="w-full max-w-[1100px] grid grid-cols-1 lg:grid-cols-2 bg-zinc-950/40 border border-white/5 rounded-[40px] shadow-3xl overflow-hidden backdrop-blur-2xl relative z-10">
+
+                {/* Left Section - Hero Brand Area */}
+                <div className="hidden lg:flex flex-col justify-center p-16 bg-gradient-to-br from-zinc-900/50 to-transparent border-r border-white/5">
+                    <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center mb-10 shadow-2xl shadow-indigo-500/20">
+                        <Lock className="w-8 h-8 text-black" />
                     </div>
-                    <h1 className="font-heading text-5xl font-bold text-white mb-6 leading-tight">
-                        Master your <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">
-                            wealth journey.
+                    <h1 className="font-heading text-6xl font-black text-white mb-6 tracking-tighter leading-[0.9]">
+                        Secure your <br />
+                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">
+                            financial future.
                         </span>
                     </h1>
-                    <p className="text-gray-400 text-lg mb-8 leading-relaxed">
-                        FinVault brings enterprise-grade portfolio management, real-time tracking, and predictive insights to your pocket.
+                    <p className="text-zinc-400 text-lg mb-12 leading-relaxed max-w-md">
+                        FinVault is a state-of-the-art encrypted platform for modern wealth management, stocks, and real-time transaction monitoring.
                     </p>
-                    <div className="flex flex-col gap-4">
-                        <div className="flex items-center gap-3 text-sm text-gray-300">
-                            <ShieldCheck className="w-5 h-5 text-green-400" /> Bank-grade encryption & security
+                    <div className="space-y-6">
+                        <div className="flex items-center gap-4 group">
+                            <div className="w-10 h-10 rounded-full bg-zinc-900 border border-white/5 flex items-center justify-center group-hover:border-blue-500/50 transition">
+                                <Shield className="w-5 h-5 text-blue-500" />
+                            </div>
+                            <span className="text-zinc-300 font-medium">Bank-grade direct encryption</span>
                         </div>
-                        <div className="flex items-center gap-3 text-sm text-gray-300">
-                            <TrendingUp className="w-5 h-5 text-indigo-400" /> Real-time Alpha Vantage integration
+                        <div className="flex items-center gap-4 group">
+                            <div className="w-10 h-10 rounded-full bg-zinc-900 border border-white/5 flex items-center justify-center group-hover:border-indigo-500/50 transition">
+                                <TrendingUp className="w-5 h-5 text-indigo-500" />
+                            </div>
+                            <span className="text-zinc-300 font-medium">Real-time market insights</span>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Right Area - Login Form */}
-            <div className="w-full lg:w-1/2 flex items-center justify-center p-8 relative z-10">
-                <div className="w-full max-w-md">
-
-                    <div className="text-center mb-10 lg:hidden">
-                        <div className="inline-block bg-white/5 p-4 rounded-2xl border border-white/10 shadow-lg mb-4">
-                            <Wallet className="w-8 h-8 text-blue-400" />
+                {/* Right Section - Authentic Login Form */}
+                <div className="flex flex-col justify-center p-8 md:p-16 lg:p-20 bg-black/20">
+                    <div className="lg:hidden flex items-center gap-3 mb-10">
+                        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
+                            <Lock className="w-6 h-6 text-black" />
                         </div>
-                        <h2 className="font-heading text-3xl font-bold text-white">FinVault</h2>
+                        <h2 className="text-2xl font-bold tracking-tight text-white uppercase italic">FinVault</h2>
                     </div>
 
-                    <div className="glass-card p-8 md:p-10 w-full shadow-2xl relative">
-                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
+                    <div className="mb-10 text-left">
+                        <h2 className="font-heading text-4xl font-black text-white mb-2">Login</h2>
+                        <p className="text-zinc-500 text-sm">Please authenticate to access your personal vault.</p>
+                    </div>
 
-                        <h2 className="font-heading text-3xl font-bold text-white mb-2">Welcome back</h2>
-                        <p className="text-gray-400 text-sm mb-8">Please enter your credentials to access your vault.</p>
+                    {error && (
+                        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-center gap-3 text-red-500 text-sm font-semibold">
+                            {error}
+                        </div>
+                    )}
 
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            {error && (
-                                <div className="bg-red-500/10 border border-red-500/30 p-4 rounded-xl flex items-start gap-3">
-                                    <div className="text-red-400 text-sm">{error}</div>
-                                </div>
-                            )}
-
-                            <div className="space-y-2">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 ml-1">Email Address</label>
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="space-y-3">
+                            <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest pl-1">Identifier</label>
+                            <div className="relative group">
+                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-600 group-focus-within:text-white transition" />
                                 <input
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full input-glass rounded-xl p-4 text-sm font-medium placeholder-gray-600"
-                                    placeholder="admin@finvault.com"
+                                    className="w-full bg-zinc-900/50 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition placeholder-zinc-700"
+                                    placeholder="Enter your email"
                                     required
                                 />
                             </div>
+                        </div>
 
-                            <div className="space-y-2">
-                                <div className="flex justify-between items-center ml-1">
-                                    <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">Password</label>
-                                    <a href="#" className="text-xs text-blue-400 hover:text-blue-300 transition">Forgot password?</a>
-                                </div>
+                        <div className="space-y-3">
+                            <div className="flex justify-between items-center pr-1">
+                                <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest pl-1">Security Key</label>
+                                <button type="button" className="text-xs font-bold text-blue-500 hover:text-blue-400">Recover Key?</button>
+                            </div>
+                            <div className="relative group">
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-600 group-focus-within:text-white transition" />
                                 <input
                                     type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full input-glass rounded-xl p-4 text-sm font-medium placeholder-gray-600"
-                                    placeholder="••••••••"
+                                    className="w-full bg-zinc-900/50 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition placeholder-zinc-700 font-mono"
+                                    placeholder="••••••••••••"
                                     required
                                 />
                             </div>
-
-                            <button
-                                type="submit"
-                                disabled={isLoading}
-                                className="w-full group glow-btn bg-white hover:bg-gray-100 text-[#050505] font-bold py-4 rounded-xl flex items-center justify-center gap-2 transform active:scale-95 transition-all outline-none"
-                            >
-                                {isLoading ? 'Authenticating...' : 'Sign In'}
-                                {!isLoading && <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
-                            </button>
-                        </form>
-
-                        <div className="mt-8 pt-6 border-t border-white/10 text-center">
-                            <p className="text-sm text-gray-500">
-                                Don't have an account? <a href="#" className="text-white font-medium hover:text-blue-400 transition">Contact Administrator</a>
-                            </p>
                         </div>
-                    </div>
+
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="w-full bg-white hover:bg-zinc-100 disabled:opacity-50 text-black font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all transform active:scale-95 shadow-xl shadow-white/5"
+                        >
+                            {isLoading ? 'Accessing Secure Core...' : 'Enter the Vault'}
+                            {!isLoading && <ArrowRight className="w-5 h-5" />}
+                        </button>
+                    </form>
+
+                    <p className="mt-12 text-center text-zinc-600 text-sm font-medium">
+                        Authorized Personnel Only. <span className="text-zinc-400">Request access from IT.</span>
+                    </p>
                 </div>
             </div>
         </div>
