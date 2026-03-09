@@ -1,0 +1,117 @@
+openapi: 3.0.0
+info:
+  title: FinVault API
+  description: Banking and Finance Tracker API
+  version: 1.0.0
+servers:
+  - url: http://localhost:5000
+    description: Local server
+paths:
+  /api/auth/register:
+    post:
+      summary: Register user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+                password: { type: string }
+                name: { type: string }
+      responses:
+        '201':
+          description: Created
+  /api/auth/login:
+    post:
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        '200':
+          description: Success
+  /api/banking/account:
+    post:
+      summary: Create financial account
+      security:
+        - bearerAuth: []
+      responses:
+        '201':
+          description: Created
+  /api/banking/deposit:
+    post:
+      summary: Deposit funds into account
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount: { type: number }
+      responses:
+        '200':
+          description: Success
+  /api/banking/withdraw:
+    post:
+      summary: Withdraw funds from account
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount: { type: number }
+      responses:
+        '200':
+          description: Success
+  /api/banking/transfer:
+    post:
+      summary: Transfer funds between accounts
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount: { type: number }
+                to_user_email: { type: string }
+      responses:
+        '200':
+          description: Success
+  /api/finance/transactions:
+    get:
+      summary: Get paginated transactions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of transactions
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
