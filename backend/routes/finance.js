@@ -4,6 +4,47 @@ const db = require('../db');
 const { authenticateToken } = require('../middleware/auth');
 const { body, validationResult, query } = require('express-validator');
 
+// Get all categories
+router.get('/categories', authenticateToken, async (req, res) => {
+    try {
+        const result = await db.query('SELECT * FROM categories ORDER BY name');
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Add a new transaction
+router.post('/transactions', authenticateToken, [
+    body('amount').isFloat({ gt: 0 }),
+    body('type').isIn(['income', 'expense']),
+    body('description').notEmpty().trim()
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+    const { amount, type, description, category } = req.body;
+    try {
+        let categoryId = null;
+        if (category) {
+            // Find or create category
+            const catRes = await db.query(
+                'INSERT INTO categories (name) VALUES ($1) ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id',
+                [category]
+            );
+            categoryId = catRes.rows[0]?.id || null;
+        }
+
+        const result = await db.query(
+            'INSERT INTO transactions (user_id, type, amount, description, category_id, date) VALUES ($1, $2, $3, $4, $5, CURRENT_DATE) RETURNING *',
+            [req.user.id, type, amount, description, categoryId]
+        );
+        res.status(201).json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Get paginated transaction history
 router.get('/transactions', authenticateToken, [
     query('page').optional().isInt({ min: 1 }),

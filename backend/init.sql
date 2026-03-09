@@ -14,7 +14,7 @@ CREATE TABLE categories (
     name VARCHAR(100) NOT NULL UNIQUE
 );
 
-INSERT INTO categories (name) VALUES ('Food'), ('Rent'), ('Travel'), ('Salary'), ('Utilities'), ('Entertainment'), ('Health'), ('Other');
+INSERT INTO categories (name) VALUES ('Food'), ('Rent'), ('Travel'), ('Salary'), ('Utilities'), ('Entertainment'), ('Health'), ('Shopping'), ('Investment'), ('Other') ON CONFLICT (name) DO NOTHING;
 
 CREATE TABLE transactions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
